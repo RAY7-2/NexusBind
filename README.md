@@ -10,7 +10,7 @@ cross-attention weights.
 
 ## How it works
 
-![](./images/fig1.svg)
+![](./images/fig1.pdf)
 
 - **DNA branch** — one-hot encoded, three residual Conv1d blocks, no
   self-attention.
