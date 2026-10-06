@@ -10,11 +10,7 @@ cross-attention weights.
 
 ## How it works
 
-```
-DNA    one-hot (4 × 200)  ──►  CNN encoder  ──►  ┐
-                                                  ├──►  2 × bidirectional  ──►  mean/max  ──►  MLP  ──►  binding logit
-Protein  ESM2-t30 (640-d) ──►  frozen, projected ┘      cross-attention          pooling
-```
+![](./images/fig1.svg)
 
 - **DNA branch** — one-hot encoded, three residual Conv1d blocks, no
   self-attention.
