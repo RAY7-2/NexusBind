@@ -10,7 +10,7 @@ cross-attention weights.
 
 ## How it works
 
-![](./images/arch.png)
+![](./images/fig1.png)
 
 ![](./images/fig1.svg)
 
