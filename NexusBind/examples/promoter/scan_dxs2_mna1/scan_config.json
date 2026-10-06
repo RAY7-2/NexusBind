@@ -1,0 +1,10 @@
+{
+  "checkpoint": "checkpoints/crossbind_at_esm2_t30/best_model.pt",
+  "protein": "custom_protein",
+  "protein_source": "realtime_esm2",
+  "protein_tokens": 240,
+  "device": "mps",
+  "window_size": 200,
+  "stride": 1,
+  "batch_size": 8
+}
