@@ -1,4 +1,4 @@
-# CrossBind
+# NexusBind
 
 Predicts whether a transcription factor (TF) binds a DNA sequence, and **where**
 — on both molecules.
@@ -11,6 +11,8 @@ cross-attention weights.
 ## How it works
 
 ![](./images/fig1.pdf)
+
+![](./images/fig1.svg)
 
 - **DNA branch** — one-hot encoded, three residual Conv1d blocks, no
   self-attention.
