@@ -24,6 +24,8 @@ cross-attention weights.
 
 The last cross-attention layer is the interpretability surface:
 
+![](./images/fig4.svg)
+
 | output | computed as | meaning |
 |---|---|---|
 | DNA importance | Protein→DNA attention, summed over protein positions | which bases the whole protein is looking at — the binding site |
