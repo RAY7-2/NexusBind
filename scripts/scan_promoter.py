@@ -6,8 +6,6 @@ include one TSV row per window, a score vector, and a DNA-attention matrix.
 Attention is calculated from the last cross-attention layer as the sum of
 protein-to-DNA attention over protein positions.
 
-All positions and window indexes in the output are **1-based**.
-
 Examples:
   python scripts/scan_promoter.py \
       --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
@@ -77,9 +75,6 @@ def encode_dna_batch(sequences):
 
 def load_protein(args, model, device):
     """Embed the protein with ESM2, using the checkpoint's trained projection.
-
-    Sets the model's own ``prot_encoder.proj`` to Identity so the embedding is
-    not projected twice.
     """
     sequence = validate_protein_sequence(args.protein_seq)
     projection = model.prot_encoder.proj
@@ -93,14 +88,6 @@ def load_protein(args, model, device):
 
 def write_results(output_dir, run_name, promoter, rows, scores, attention, peaks):
     """Write per-window results.
-
-    All positions and indexes are **1-based**, matching inference.py: the first
-    window is `window_index` 1, the first base is `start` 1, and `end` is
-    inclusive.  Internally `rows` still carries 0-based offsets, so each value
-    written here is offset by one.
-
-    Everything tabular goes into a single `window_scores.csv`; the remaining
-    arrays that do not fit a row-per-window table are saved as `.npy`.
     """
     output_dir.mkdir(parents=True, exist_ok=True)
     with open(output_dir / "window_scores.csv", "w", newline="") as handle:
@@ -113,18 +100,19 @@ def write_results(output_dir, run_name, promoter, rows, scores, attention, peaks
         for row, score, importance, peak in zip(rows, scores, attention, peaks):
             start_0 = row[1]
             writer.writerow([
-                row[0] + 1,                 # 1-based window index
-                start_0 + 1,                # 1-based first base of the window
-                start_0 + row[2] - row[1],  # 1-based inclusive last base
+                row[0] + 1,                 # window index
+                start_0 + 1,                # first base of the window
+                start_0 + row[2] - row[1],  # inclusive last base
                 row[3], f"{score:.7f}",
-                peak[0] + 1,                # 1-based position within the window
-                start_0 + peak[0] + 1,      # 1-based position in the input
+                peak[0] + 1,                # position within the window
+                start_0 + peak[0] + 1,      # position in the input
             ])
-
-    # Per-base DNA importance for every window: (n_windows, window_size).
-    # Each row is min-max scaled onto [0, 1] independently, matching how
-    # inference.py reports its DNA profile.  Scaling is monotonic, so the
-    # argmax of each row is unchanged and still agrees with the CSV.
+          
+    """
+    Per-base DNA importance for every window: (n_windows, window_size).
+    Each row is min-max scaled onto [0, 1] independently.
+    """
+  
     np.save(output_dir / "window_attention_importance.npy",
             np.asarray([normalize_importance(row) for row in attention],
                        dtype=np.float32))
