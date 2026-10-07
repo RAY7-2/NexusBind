@@ -1,6 +1,6 @@
 # Shipped checkpoint
 
-`crossbind_at_esm2_t30/best_model.pt` — 10 MB, 90 state-dict entries.
+`nexusbind_at_esm2_t30/best_model.pt` — 10 MB, 90 state-dict entries.
 
 ## Provenance
 
@@ -65,7 +65,7 @@ these values are documentation only.
 
 ```python
 import torch
-ckpt = torch.load("checkpoints/crossbind_at_esm2_t30/best_model.pt",
+ckpt = torch.load("checkpoints/nexusbind_at_esm2_t30/best_model.pt",
                   map_location="cpu", weights_only=False)
 print(ckpt["hparams"], ckpt["val_metrics"])
 ```
