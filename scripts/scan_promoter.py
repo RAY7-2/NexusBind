@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Scan a long promoter with the current CrossBind inference interface.
+"""Scan a long promoter with the current NexusBind inference interface.
 
 Every complete 200-bp window is scored with stride 1 by default.  Outputs
 include one TSV row per window, a score vector, and a DNA-attention matrix.
@@ -10,7 +10,7 @@ All positions and window indexes in the output are **1-based**.
 
 Examples:
   python scripts/scan_promoter.py \
-      --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
+      --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
       --protein-seq 'M...' --promoter-file promoter.fa \
       --output-dir results/promoter_scan --run-name my_promoter
 
@@ -152,7 +152,7 @@ def write_results(output_dir, run_name, promoter, rows, scores, attention, peaks
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Scan promoter windows with CrossBind.")
+    parser = argparse.ArgumentParser(description="Scan promoter windows with NexusBind.")
     parser.add_argument("--checkpoint", type=Path, required=True)
     parser.add_argument("--protein-seq", required=True,
                         help="Raw protein sequence (embedded with ESM2)")
