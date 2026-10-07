@@ -1,5 +1,5 @@
 """
-CrossBind model: TF-DNA binding prediction with cross-attention interpretability.
+NexusBind model: TF-DNA binding prediction with cross-attention interpretability.
 
 Composes a DNA encoder (one-hot CNN), a protein encoder (frozen ESM2
 embeddings), optional self-attention layers per branch, bidirectional
@@ -7,8 +7,7 @@ cross-attention, and a prediction head.
 
 The last cross-attention layer is what makes the model interpretable:
 its Protein→DNA weights localize the DNA binding site, and its DNA→Protein
-weights localize the protein DNA-binding domain.  See
-``predict_binding_sites()``.
+weights localize the protein DNA-binding domain. 
 """
 
 import math
@@ -276,12 +275,3 @@ class TFBindingPretrainedModel(nn.Module):
         prot_imp = dna2prot.sum(dim=1)      # (B, L_prot) — sum over DNA dim
 
         return torch.sigmoid(logits), dna_imp, prot_imp, dna2prot, prot2dna
-
-
-# ═══════════════════════════════════════════════════════════════════
-# Model construction
-# ═══════════════════════════════════════════════════════════════════
-#
-# The architecture is reconstructed from the checkpoint itself — layer counts
-# and dimensions are recovered from the state dict, so there is no separate
-# builder here.  See ``load_model()`` in inference.py.
