@@ -1,12 +1,8 @@
 # NexusBind
 
-Predicts whether a transcription factor (TF) binds a DNA sequence, and **where**
-— on both molecules.
-
-A DNA sequence and a protein sequence go in; a binding probability plus
-per-position importance for every base and every residue come out. The
-interpretability is not bolted on: it is read directly off the model's
-cross-attention weights.
+A zero-shot multi-modal sequence-to-interaction decoder that integrates a CNN-based DNA encoder with frozen ESM2 embeddings 
+via bidirectional cross attention.
+The interpretability is not bolted on: it is read directly off the model's cross-attention weights.
 
 ## How it works
 
