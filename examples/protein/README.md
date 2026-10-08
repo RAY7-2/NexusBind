@@ -1,9 +1,9 @@
 # Protein example
 
-`mna1-protein-seq.faa` — the *MNA1* protein, 238 aa.
+`mnb1a-protein-seq.faa` — the *mnb1a* protein, 238 aa.
 
 ```
->mna1
+>mnb1a
 MQEASSAAAAGAEPGRRAAQHQFAGVDLRRPKGYAAPAPAPAVGEGDPCPRCASRDT...
 ```
 
@@ -11,10 +11,10 @@ MQEASSAAAAGAEPGRRAAQHQFAGVDLRRPKGYAAPAPAPAVGEGDPCPRCASRDT...
 
 ```bash
 python scripts/inference.py \
-    --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
-    --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
+    --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
+    --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
     --dna "$(grep -v '>' examples/promoter/dxs2-promoter.fa | tr -d '\n')" \
-    --run-name mna1_example
+    --run-name mnb1a_example
 ```
 
 > The DXS2 promoter is 556 bp, so it is truncated to the model's 200 bp training
@@ -23,7 +23,7 @@ python scripts/inference.py \
 > `scripts/scan_promoter.py`, which slides a 200 bp window across the whole
 > promoter and finds the 0.993 peak at bases 12–211. To score a specific
 > region, slice it yourself — see the committed example at
-> [`../promoter/inference_dxs2_mna1/`](../promoter/inference_dxs2_mna1/),
+> [`../promoter/inference_dxs2_mnb1a/`](../promoter/inference_dxs2_mnb1a/),
 > which does exactly that on the top-scoring window.
 
 ## Your own protein
