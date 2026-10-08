@@ -1,5 +1,5 @@
 """
-Config for CrossBind inference.
+Config for NexusBind inference.
 
 Holds the ESM2 model identity, the local ESM2 cache location, sequence limits
 and the architectural defaults the shipped checkpoint was trained with.
