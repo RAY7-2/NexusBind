@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-CrossBind inference: binding score + binding-site prediction via cross-attention.
+NexusBind inference: binding score + binding-site prediction via cross-attention.
 
 The protein is embedded on the fly with ESM2 (frozen), so the only external
 asset needed is the ESM2 weights — see the README's ESM2 setup section.
@@ -13,11 +13,10 @@ Outputs:
   - Full cross-attention weight matrices (raw, unnormalized)
   - result.json, including the top-1 position and the sequence window around it
 
-All positions reported here are **1-based**.
 
 Usage:
     python scripts/inference.py \
-        --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
+        --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
         --protein-seq MADQLTEEQIAEFKEAFSLFDKDGDGTITTKELGTVMRSL \
         --dna ATACGTAACGTACGTAGCTAGCTAGCTA
 
@@ -81,7 +80,7 @@ def load_model(checkpoint_path, device):
     prot_self = count_layers("prot_self_attn")
     cross_layers = count_cross_layers()
     if cross_layers == 0:
-        raise ValueError("Checkpoint contains no cross-attention layers and is not a CrossBind model.")
+        raise ValueError("Checkpoint contains no cross-attention layers and is not a NexusBind model.")
 
     proj_key = "prot_encoder.proj.weight"
     esm_dim = state_dict[proj_key].shape[1] if proj_key in state_dict else d_model
@@ -120,10 +119,6 @@ def extract_esm2_embedding_realtime(protein_seq, device, trained_proj, esm2_mode
             f"checkpoint expects {trained_proj.in_features}. Use the ESM2 model used in training."
         )
 
-    # Tokenize.  Use AutoTokenizer directly instead of the project wrapper:
-    # some transformers versions query the Hub for chat-template metadata even
-    # when the tokenizer files are already cached.  A local-only retry avoids
-    # that unnecessary network request after the model itself has loaded.
     from transformers import AutoTokenizer
     try:
         tok = AutoTokenizer.from_pretrained(
@@ -147,7 +142,6 @@ def extract_esm2_embedding_realtime(protein_seq, device, trained_proj, esm2_mode
     # ESM2 forward (use the underlying EsmModel for raw output)
     with torch.no_grad():
         out = esm_enc.esm(input_ids=ids_t, attention_mask=(ids_t != 0))
-        # out is a HuggingFace BaseModelOutput, not a tuple
         raw_emb = out.last_hidden_state.float()
         proj_emb = trained_proj(raw_emb)
 
@@ -170,8 +164,6 @@ def tokenize_dna(seq: str, max_len=None):
         print(f"WARNING: DNA is {len(seq)} bp; truncating to the first {max_len} bp.")
     tokens = [mapping[c] for c in seq]
     L = min(len(tokens), max_len)
-    # Match training collation: cap the sequence length, but do not add
-    # inference-only trailing padding for a single DNA sequence.
     arr = np.zeros((1, config.DNA_VOCAB, L), dtype=np.float32)
     mask = np.ones((1, L), dtype=bool)
     for i in range(L):
@@ -195,9 +187,6 @@ def validate_protein_sequence(seq: str) -> str:
 
 def normalize_importance(values):
     """Min-max scale an importance vector onto [0, 1].
-
-    A constant vector has no meaningful peak, so it maps to all zeros rather
-    than dividing by zero.
     """
     lo, hi = float(np.min(values)), float(np.max(values))
     if hi - lo < 1e-12:
@@ -207,10 +196,6 @@ def normalize_importance(values):
 
 def sequence_window(seq, pos0, flank=10):
     """Return seq[pos0] plus `flank` characters either side, clamped to the ends.
-
-    `pos0` is a 0-based index into `seq`; the returned string is what the
-    caller reports to the user, so it may be shorter than 2*flank+1 near the
-    sequence boundaries.
     """
     start = max(0, pos0 - flank)
     end = min(len(seq), pos0 + flank + 1)
@@ -220,7 +205,7 @@ def sequence_window(seq, pos0, flank=10):
 def run_inference(model, dna_tokens, dna_mask, prot_tokens, device):
     """
     Run full inference, returning score + all attention matrices.
-
+    
     Returns:
         score:        float, binding probability [0,1]
         dna_imp:      (L_dna,) per-base importance (raw; caller normalizes)
@@ -247,9 +232,6 @@ def run_inference(model, dna_tokens, dna_mask, prot_tokens, device):
 
 def _plot_importance(values, xlabel, ylabel, title, out_path, color):
     """Plot per-position importance as a curve with a diamond at every position.
-
-    Positions on the x axis are 1-based, matching every other reported
-    coordinate (the .txt files, result.json and scan_promoter's TSV).
     """
     import matplotlib
     matplotlib.use('Agg')
@@ -257,7 +239,7 @@ def _plot_importance(values, xlabel, ylabel, title, out_path, color):
 
     L = len(values)
     fig, ax = plt.subplots(figsize=(14, 4))
-    x = np.arange(1, L + 1)                       # 1-based positions
+    x = np.arange(1, L + 1)                       
 
     ax.plot(x, values, color=color, linewidth=0.8,
             marker='D', markersize=4, markeredgewidth=0)
@@ -269,7 +251,6 @@ def _plot_importance(values, xlabel, ylabel, title, out_path, color):
     ax.grid(axis='y', alpha=0.3)
 
     if L:
-        # A little headroom so the topmost diamond isn't clipped
         ax.set_ylim(0, max(float(np.max(values)), 1e-6) * 1.05)
 
     plt.tight_layout()
@@ -362,14 +343,14 @@ def main():
     print(f"Protein importance: min-max scaled to [0,1] over {prot_len} aa")
     print(f"Attention matrices: dna2prot {dna2prot.shape}, prot2dna {prot2dna.shape}")
 
-    # Top DNA positions (reported 1-based)
+    # Top DNA positions 
     top_dna = np.argsort(valid_dna)[-10:][::-1]
     print(f"\nTop 10 DNA positions (potential binding site):")
     for i, pos in enumerate(top_dna):
         print(f"  #{i+1}: pos={pos+1:4d}  score={valid_dna[pos]:.4f}  "
               f"'{sequence_window(dna_seq, pos)}'")
 
-    # Top Protein positions (reported 1-based)
+    # Top Protein positions 
     top_prot = np.argsort(valid_prot)[-10:][::-1]
     print(f"\nTop 10 Protein positions (potential DBD):")
     for i, pos in enumerate(top_prot):
@@ -382,8 +363,7 @@ def main():
     task_dir = out_dir / run_name
     task_dir.mkdir(parents=True, exist_ok=True)
 
-    # Per-position importance. Written as plain text only — line N holds the
-    # value for position N (1-based), so the file is directly readable.
+    # Per-position importance. 
     np.savetxt(task_dir / "dna_importance.txt", valid_dna, fmt='%.6f')
     np.savetxt(task_dir / "prot_importance.txt", valid_prot, fmt='%.6f')
 
