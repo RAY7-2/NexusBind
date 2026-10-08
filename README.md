@@ -18,7 +18,7 @@ cross-attention weights.
   self-attention layer.
 - **Cross-attention** — two layers of *bidirectional* attention. The protein
   attends to the DNA and the DNA attends to the protein.
-- **~2.5M trainable parameters.** Nothing pretrained is fine-tuned.
+- **~2.5M trainable parameters.**
 
 The last cross-attention layer is the interpretability surface:
 
