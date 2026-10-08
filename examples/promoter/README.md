@@ -31,10 +31,6 @@ can inspect it before running anything:
 | attention peak | base **109** of the promoter (local 98) |
 | score range across all windows | 0.000 – 0.993, mean 0.014 |
 
-The sharp contrast between peak and mean is the point: nearly all 357 windows
-score near zero and one stands out. Note that scoring only the *first* 200 bp
-gives 0.03 — the binding site is not at the start, which is exactly why a
-whole-promoter scan is the right tool here.
 
 ### What's in `scan_dxs2_mnb1a/`
 
@@ -45,8 +41,6 @@ whole-promoter scan is the right tool here.
 | `window_attention_importance.npy` | per-base importance profile for every window |
 | `scan_config.json` | the exact settings used for this run |
 
-At 372 KB total this is small enough to commit; a real genome-wide scan is not,
-which is why nothing under `results/` is tracked.
 
 ### `window_scores.csv`
 
@@ -96,8 +90,6 @@ windows, use `binding_score` in the CSV.
 
 Every position and index this tool reports is **1-based**: the first base is
 position 1, the first window is `window_index` 1, and `end` is *inclusive*
-(so a 200 bp window starting at 12 spans 12–211). `result.json` records
-`"coordinate_base": 1` so a downstream reader never has to guess.
 
 ## Following up on the top window
 
@@ -112,27 +104,10 @@ window from the scan (bases 12–211, i.e. `promoter[11:211]`):
 python scripts/inference.py \
     --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
     --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
-    --dna "$(python3 -c "
-p=''.join(l.strip() for l in open('examples/promoter/dxs2-promoter.fa').read().splitlines()[1:])
-print(p[11:211])")" \
+    --dna "$(grep -v '>' examples/promoter/dxs2-promoter.fa | tr -d '\n')" \
     --run-name inference_dxs2_mnb1a --output-dir examples/promoter
 ```
 
-| | scan (`scan_dxs2_mnb1a/`) | inference (`inference_dxs2_mnb1a/`) |
-|---|---|---|
-| binding score | 0.9932180 | 0.9932180 |
-| DNA peak | local 98 → promoter 109 | local 98 |
-| protein DBD | *not reported* | peak at residue **139** |
-
-The two agree exactly, which is a useful sanity check that both entry points
-run the same model the same way. The protein side is where inference adds
-value: the DNA→Protein attention localizes the DNA-binding domain to a handful
-of residues (139, 79, 78, 140, 71, 51 — mostly arginines), and
-`prot_importance.png` plots the profile across the full 238-residue protein.
-
-Note the coordinate shift: `attention_peak_local` is relative to the *window*,
-so promoter position = `start + attention_peak_local - 1` (12 + 98 − 1 = 109),
-which is what the scan's `attention_peak_input` column already gives you.
 
 ### What's in `inference_dxs2_mnb1a/`
 
