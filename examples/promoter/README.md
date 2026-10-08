@@ -11,17 +11,17 @@ TTATTAATTAACCTATGAACATATTTTATATGTATGTGTTATATGTATATCTATGTTT...
 
 ```bash
 python scripts/scan_promoter.py \
-    --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
-    --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
+    --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
+    --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
     --promoter-file examples/promoter/dxs2-promoter.fa \
-    --output-dir results/scan_promoter --run-name dxs2_mna1
+    --output-dir results/scan_promoter --run-name dxs2_mnb1a
 ```
 
 556 bp at the default `stride 1` gives **357 windows**. The highest-scoring
 window is the predicted binding site; `window_scores.csv` lists every window
 with its score and attention peak.
 
-**The output of this exact command is committed at `scan_dxs2_mna1/`**, so you
+**The output of this exact command is committed at `scan_dxs2_mnb1a/`**, so you
 can inspect it before running anything:
 
 | | |
@@ -36,7 +36,7 @@ score near zero and one stands out. Note that scoring only the *first* 200 bp
 gives 0.03 — the binding site is not at the start, which is exactly why a
 whole-promoter scan is the right tool here.
 
-### What's in `scan_dxs2_mna1/`
+### What's in `scan_dxs2_mnb1a/`
 
 | file | contents |
 |---|---|
@@ -105,20 +105,20 @@ The scan tells you *which* window binds; `inference.py` gives the full
 position-level breakdown for that one window — including the protein side,
 which the scan does not report.
 
-**The output is committed at `inference_dxs2_mna1/`.** It scores the top
+**The output is committed at `inference_dxs2_mnb1a/`.** It scores the top
 window from the scan (bases 12–211, i.e. `promoter[11:211]`):
 
 ```bash
 python scripts/inference.py \
-    --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
-    --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
+    --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
+    --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
     --dna "$(python3 -c "
 p=''.join(l.strip() for l in open('examples/promoter/dxs2-promoter.fa').read().splitlines()[1:])
 print(p[11:211])")" \
-    --run-name inference_dxs2_mna1 --output-dir examples/promoter
+    --run-name inference_dxs2_mnb1a --output-dir examples/promoter
 ```
 
-| | scan (`scan_dxs2_mna1/`) | inference (`inference_dxs2_mna1/`) |
+| | scan (`scan_dxs2_mnb1a/`) | inference (`inference_dxs2_mnb1a/`) |
 |---|---|---|
 | binding score | 0.9932180 | 0.9932180 |
 | DNA peak | local 98 → promoter 109 | local 98 |
@@ -134,7 +134,7 @@ Note the coordinate shift: `attention_peak_local` is relative to the *window*,
 so promoter position = `start + attention_peak_local - 1` (12 + 98 − 1 = 109),
 which is what the scan's `attention_peak_input` column already gives you.
 
-### What's in `inference_dxs2_mna1/`
+### What's in `inference_dxs2_mnb1a/`
 
 | file | contents |
 |---|---|
