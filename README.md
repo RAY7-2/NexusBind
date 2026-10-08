@@ -10,8 +10,6 @@ cross-attention weights.
 
 ## How it works
 
-![](./images/fig1.png)
-
 ![](./images/fig1.svg)
 
 - **DNA branch** — one-hot encoded, three residual Conv1d blocks, no
@@ -49,19 +47,17 @@ pip install -r requirements.txt
 
 CPU, CUDA and Apple Metal (MPS) are all supported and selected automatically.
 
-## ⚠️ Required: set up ESM2 first
+## Required: set up ESM2 first
 
-**Nothing in this repository runs without the ESM2 weights.** The protein
-branch embeds your sequence with ESM2 at inference time, and the checkpoint
-does not bundle it.
+**The protein branch embeds your sequence with ESM2 at inference time, and the checkpoint does not bundle it.** 
 
-CrossBind uses [`facebook/esm2_t30_150M_UR50D`](https://huggingface.co/facebook/esm2_t30_150M_UR50D)
+nexusbind uses [`facebook/esm2_t30_150M_UR50D`](https://huggingface.co/facebook/esm2_t30_150M_UR50D)
 (640-dimensional, ~600 MB). The embedding dimension must be 640 — a different
 ESM2 size is rejected with an explicit error.
 
 ### Online (simplest)
 
-Do nothing. On the first run `transformers` downloads the weights into
+On the first run `transformers` downloads the weights into
 `--esm2-cache-dir` (default `pretrained_models/esm2`).
 
 ### Offline / pre-download
@@ -71,19 +67,13 @@ pip install "huggingface_hub[cli]"
 hf download facebook/esm2_t30_150M_UR50D --cache-dir pretrained_models/esm2
 ```
 
-Then pass `--local-files-only` on every invocation so nothing touches the
-network.
+Then pass `--local-files-only` on every invocation to run NexusBind offline.
 
-> **Use `--cache-dir`, not `--local-dir`.** `--esm2-cache-dir` expects the
-> HuggingFace *hub* layout (`models--facebook--esm2_t30_150M_UR50D/`), which
-> `--local-dir` does not produce. Alternatively set `export HF_HUB_OFFLINE=1`.
-
-On older clients the command is `huggingface-cli download <repo> --cache-dir <dir>`.
 
 ## Checkpoint
 
 ```
-checkpoints/crossbind_at_esm2_t30/best_model.pt     ~10 MB
+checkpoints/nexusbind_at_esm2_t30/best_model.pt     ~10 MB
 ```
 
 Test-set performance, from a held-out evaluation on 230,782 balanced samples
@@ -93,21 +83,19 @@ covering 56 TFs (equal positives and negatives):
 |---|---|---|---|
 | 0.9154 | 0.9733 | 0.9753 | 0.8318 |
 
-The checkpoint's own validation split scores acc 0.8842 / AUC 0.9676. See
-[`checkpoints/CHECKPOINT.md`](checkpoints/CHECKPOINT.md) for full provenance,
-hyper-parameters and how the architecture is recovered from the file.
+See [`checkpoints/CHECKPOINT.md`](checkpoints/CHECKPOINT.md) for full hyper-parameters.
 
 ## Quickstart 1 — scan a promoter
 
-The shipped example is the 556 bp *DXS2* promoter scanned with the *MNA1*
+The shipped example is the 556 bp *DXS2* promoter scanned with the *MNB1a*
 protein. Every 200 bp window is scored at stride 1:
 
 ```bash
 python scripts/scan_promoter.py \
-    --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
+    --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
     --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
     --promoter-file examples/promoter/dxs2-promoter.fa \
-    --output-dir results/scan_promoter --run-name dxs2_mna1
+    --output-dir results/scan_promoter --run-name dxs2_mnb1a
 ```
 
 Add `--local-files-only` to the commands above to run fully offline once ESM2
@@ -116,7 +104,7 @@ is cached. 556 bp → **357 windows**, peaking at **0.993** in window 12
 window is the predicted binding site.
 
 **This run's output is already committed** at
-[`examples/promoter/scan_dxs2_mna1/`](examples/promoter/scan_dxs2_mna1/) if you
+[`examples/promoter/scan_dxs2_mnb1a/`](examples/promoter/scan_dxs2_mnb1a/) if you
 want to see what the tool produces before installing anything. See
 [`examples/promoter/README.md`](examples/promoter/README.md).
 
@@ -127,15 +115,12 @@ matrices for that one 200 bp window:
 
 ```bash
 python scripts/inference.py \
-    --checkpoint checkpoints/crossbind_at_esm2_t30/best_model.pt \
+    --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
     --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
     --dna "$(grep -v '>' examples/promoter/dxs2-promoter.fa | tr -d '\n')" \
     --run-name mna1_example
 ```
 
-Prints the binding score, the top 10 DNA positions and top 10 protein
-positions. Note the 556 bp promoter is truncated to 200 bp here — use
-Quickstart 1 to scan it in full, then Quickstart 2 on the winning window.
 
 That follow-up run is also committed, at
 [`examples/promoter/inference_dxs2_mna1/`](examples/promoter/inference_dxs2_mna1/):
@@ -150,13 +135,13 @@ DNA-binding domain localizes to residue 139 of MNA1. See
 
 | flag | required | default | notes |
 |---|---|---|---|
-| `--checkpoint` | ✅ | | path to `best_model.pt` |
-| `--protein-seq` | ✅ | | raw amino-acid sequence |
-| `--dna` | ✅ | | DNA; trained on 200 bp, longer input is truncated with a warning |
+| `--checkpoint` | Yes | | path to `best_model.pt` |
+| `--protein-seq` | Yes | | raw amino-acid sequence |
+| `--dna` | Yes | | DNA; trained on 200 bp, longer input is truncated with a warning |
 | `--dna-max-len` | | `200` | truncation length |
 | `--esm2-model` | | `facebook/esm2_t30_150M_UR50D` | must match the checkpoint's 640-d |
 | `--esm2-cache-dir` | | `pretrained_models/esm2` | where ESM2 lives |
-| `--local-files-only` | | off | never touch the network |
+| `--local-files-only` | | off | run offline |
 | `--output-dir` | | `results/inference` | |
 | `--run-name` | | `custom_protein_manual` | subfolder under `--output-dir` |
 
@@ -164,10 +149,10 @@ DNA-binding domain localizes to residue 139 of MNA1. See
 
 | flag | required | default | notes |
 |---|---|---|---|
-| `--checkpoint` | ✅ | | |
-| `--protein-seq` | ✅ | | |
-| `--promoter` *or* `--promoter-file` | ✅ | | exactly one |
-| `--run-name` | ✅ | | subfolder under `--output-dir` |
+| `--checkpoint` | Yes | | |
+| `--protein-seq` | Yes | | |
+| `--promoter` *or* `--promoter-file` | Yes | | exactly one |
+| `--run-name` | Yes | | subfolder under `--output-dir` |
 | `--window-size` | | `200` | **must** be 200 |
 | `--stride` | | `1` | window step |
 | `--batch-size` | | `8` | windows per forward pass |
@@ -189,8 +174,7 @@ DNA-binding domain localizes to residue 139 of MNA1. See
 | `prot2dna_attn.npy` | full Protein→DNA attention, `(n_residues, n_bases)`, raw weights |
 
 Both importance profiles are **min-max scaled onto [0, 1]** after the ESM2
-`<cls>`/`<eos>` tokens are removed — the reported peak is exactly 1.0. The
-`*_attn.npy` matrices keep the raw attention weights.
+The `*_attn.npy` matrices keep the raw attention weights.
 
 `result.json` reports the top-1 hit on each side as a position plus the
 sequence window around it (peak ±10):
@@ -216,22 +200,6 @@ to be read within that window. It is not a measure of how strongly a window
 binds; for that use `binding_score`. The one exception is `inference.py`'s
 `dna2prot_attn.npy` / `prot2dna_attn.npy`, which hold the raw (unscaled)
 attention matrices for the single pair being scored.
-
-## Scope
-
-This release contains **inference only** — the training pipeline, motif
-discovery, genome-wide scanning tools and web interface from the development
-repository are not included. The model expects the 200 bp window and
-ESM2-t30 embedding it was trained with; other configurations are not
-supported.
-
-## Data and third-party components
-
-- **ESM2** (`facebook/esm2_t30_150M_UR50D`, Meta AI, MIT) is **not**
-  redistributed here — see the ESM2 setup section above.
-- The training data (Arabidopsis DAP-seq) is not redistributed here.
-- `checkpoints/crossbind_at_esm2_t30/best_model.pt` is a derivative of
-  embeddings produced by the ESM2 model above.
 
 ## Citation
 
