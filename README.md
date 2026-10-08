@@ -93,7 +93,7 @@ protein. Every 200 bp window is scored at stride 1:
 ```bash
 python scripts/scan_promoter.py \
     --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
-    --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
+    --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
     --promoter-file examples/promoter/dxs2-promoter.fa \
     --output-dir results/scan_promoter --run-name dxs2_mnb1a
 ```
@@ -116,17 +116,17 @@ matrices for that one 200 bp window:
 ```bash
 python scripts/inference.py \
     --checkpoint checkpoints/nexusbind_at_esm2_t30/best_model.pt \
-    --protein-seq "$(grep -v '>' examples/protein/mna1-protein-seq.faa | tr -d '\n')" \
+    --protein-seq "$(grep -v '>' examples/protein/mnb1a-protein-seq.faa | tr -d '\n')" \
     --dna "$(grep -v '>' examples/promoter/dxs2-promoter.fa | tr -d '\n')" \
-    --run-name mna1_example
+    --run-name mnb1a_example
 ```
 
 
 That follow-up run is also committed, at
-[`examples/promoter/inference_dxs2_mna1/`](examples/promoter/inference_dxs2_mna1/):
+[`examples/promoter/inference_dxs2_mnb1a/`](examples/promoter/inference_dxs2_mnb1a/):
 it scores the scan's top window (bases 12–211) and reproduces the scan's
 0.9932 exactly, adding the protein side the scan does not report — the
-DNA-binding domain localizes to residue 139 of MNA1. See
+DNA-binding domain localizes to residue 139 of mnb1a. See
 [`examples/protein/README.md`](examples/protein/README.md) for input format.
 
 ## CLI reference
