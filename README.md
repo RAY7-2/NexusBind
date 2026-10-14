@@ -185,12 +185,10 @@ sequence window around it (peak ±10):
 
 | file | shape | contents |
 |---|---|---|
-| `window_scores.csv` | 357 rows | one row per window: index, start, end, sequence, score, attention peak (all 1-based; `end` inclusive) |
-| `window_attention_importance.npy` | `(357, 200)` | per-base DNA importance profile inside each window; each row min-max scaled to [0, 1] |
+| `window_scores.csv` | 357 rows | one row per window: index, start, end, sequence, score, attention peak |
+| `window_attention_importance.npy` | `(357, 200)` | per-base DNA importance profile inside each window |
 | `result.json`, `scan_config.json` | | summary and the exact settings used |
 
-Both tools normalize their importance profiles the same way — min-max onto
-[0, 1] — so a peak always reads 1.0.
 
 Attention answers *where* along a window the protein is looking, and is meant
 to be read within that window. It is not a measure of how strongly a window
